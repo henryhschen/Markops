@@ -1,4 +1,15 @@
-#!/usr/local/bin/python3
+#!/usr/local/bin/python3.6
 
-import re
+import re, json, collections
 import pandas as pd
+import numpy as np
+
+
+
+
+
+
+
+
+
+
