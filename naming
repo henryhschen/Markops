@@ -1,0 +1,12 @@
+{
+  "PV":
+       {
+        "Name": "Production level", 
+        "Unit": "KU"
+       }, 
+  "PC":
+      {
+        "Name": "Production capacity", 
+        "Unit": "KU"
+      }
+}
