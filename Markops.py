@@ -3,6 +3,7 @@
 import re, json, collections, argparse, matplotlib
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Process for Markops')
 parser.add_argument('-excel',nargs='+', help='Input excel files', required=True)
@@ -16,13 +17,22 @@ except:
     parser.print_help()
     exit()
 
+data = collections.defaultdict(lambda: collections.defaultdict(dict))
 for f in sorted(args.excel):
-    A = pd.read_excel(f, sheet_name='A_Decision')
-    print(A)
+    xls = pd.ExcelFile(f)
+    f_name = re.search(r"^Period(\d)\.", f, re.IGNORECASE).groups()[0]
+    for sheet in sorted(xls.sheet_names):
+        parse = xls.parse(sheet)
+        sheet_name = re.search(r"^(\w)_", sheet, re.IGNORECASE).groups()[0]
+        data[f_name][sheet_name.upper()]= parse
 
+#for f, v1 in data.items():
+#    for s, v2 in v1.items():
+#        print(f, s)
 
-#test = collections.defaultdict(lambda: collections.defaultdict(dict))
-
+for f, v1 in data.items():
+    v1["G"]["Type"] = v1["G"]["Product"]+v1["G"]["Company"]+"_"+v1["G"]["SM"]
+    plt.plot(v1["G"]["Type"], v1["G"]["USWOT"])
 #with open("data", "rt") as f:
 #    config = json.load(f)
 #f.close()
