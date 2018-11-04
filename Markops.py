@@ -5,16 +5,28 @@ import pandas as pd
 import numpy as np
 
 parser = argparse.ArgumentParser(description='Process for Markops')
-parser.add_argument('config',nargs='?', help='Input config file', default="naming")
-args = parser.parse_args()
-print("-config", args.config)
+parser.add_argument('-excel',nargs='+', help='Input excel files', required=True)
+#parser.add_argument('config',nargs='?', help='Input config file', default="naming")
+#parser.add_argument('config',nargs='?', help='Input config file', default="naming")
 
-test = collections.defaultdict(lambda: collections.defaultdict(dict))
+try:
+    args = parser.parse_args()
+    print("-excel", args.excel)
+except:
+    parser.print_help()
+    exit()
 
-with open("data", "rt") as f:
-    config = json.load(f)
-f.close()
-print(config)
+for f in sorted(args.excel):
+    A = pd.read_excel(f, sheet_name='A_Decision')
+    print(A)
+
+
+#test = collections.defaultdict(lambda: collections.defaultdict(dict))
+
+#with open("data", "rt") as f:
+#    config = json.load(f)
+#f.close()
+#print(config)
 
 
 
