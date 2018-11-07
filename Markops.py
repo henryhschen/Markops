@@ -152,10 +152,10 @@ for f, v1 in sorted(data.items()):
             #print(col, row[col], row[0]+row[1])
             swot = int(row[1].replace("Z", ""))
             unit_price =np.single(row[col]/swot)
-            label= iden_label(int(search[1]))
-            H_I_unit_data[f][row[0]+row[1]+label+"_Direct"]["UnitPrice"] = unit_price
-            H_I_unit_data[f][row[0]+row[1]+label+"_Direct"]["swot"] = row[col]
-            H_I_unit_data[f][row[0]+row[1]+label+"_Direct"]["seg"] = label
+            label= iden_label(swot)
+            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Direct"]["UnitPrice"] = unit_price
+            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Direct"]["swot"] = row[col]
+            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Direct"]["seg"] = label
 
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
@@ -204,10 +204,10 @@ for f, v1 in sorted(data.items()):
             #print(col, row[col], row[0]+row[1])
             swot = int(row[1].replace("Z", ""))
             unit_price =np.single(row[col]/swot)
-            label= iden_label(int(search[1]))
-            H_I_unit_data[f][row[0]+row[1]+label+"_Indirect"]["UnitPrice"] = unit_price
-            H_I_unit_data[f][row[0]+row[1]+label+"_Indirect"]["swot"] = row[col]
-            H_I_unit_data[f][row[0]+row[1]+label+"_Indirect"]["seg"] = label
+            label= iden_label(swot)
+            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Indirect"]["UnitPrice"] = unit_price
+            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Indirect"]["swot"] = row[col]
+            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Indirect"]["seg"] = label
 
 
 
