@@ -147,18 +147,15 @@ for f, v1 in sorted(data.items()):
   
         
 for f, v1 in sorted(data.items()):
-    #v1["H"]["Type"] = v1["H"]["Company"]+v1["H"]["Product"]
-    H_I_unit_data[f]["Direct"]["x"] = []
-    H_I_unit_data[f]["Direct"]["y"] = []
-    H_I_unit_data[f]["Direct"]["product"] = []
     for r_i, row in v1["H"].iterrows():
         for col in v1["H"].columns[2:3]:
             #print(col, row[col], row[0]+row[1])
             swot = int(row[1].replace("Z", ""))
             unit_price =np.single(row[col]/swot)
-            H_I_unit_data[f]["Direct"]["x"].append(swot)
-            H_I_unit_data[f]["Direct"]["y"].append(unit_price)
-            H_I_unit_data[f]["Direct"]["product"].append(row[0]+row[1])
+            label= iden_label(int(search[1]))
+            H_I_unit_data[f][row[0]+row[1]+label+"_Direct"]["UnitPrice"] = unit_price
+            H_I_unit_data[f][row[0]+row[1]+label+"_Direct"]["swot"] = row[col]
+            H_I_unit_data[f][row[0]+row[1]+label+"_Direct"]["seg"] = label
 
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
@@ -202,17 +199,15 @@ for f, v1 in sorted(data.items()):
                 I_data[col][row[0]+row[1]]["y"] = [row[col]]
 
 for f, v1 in sorted(data.items()):
-    H_I_unit_data[f]["Indirect"]["x"] = []
-    H_I_unit_data[f]["Indirect"]["y"] = []
-    H_I_unit_data[f]["Indirect"]["product"] = []
     for r_i, row in v1["I"].iterrows():
         for col in v1["I"].columns[2:3]:
             #print(col, row[col], row[0]+row[1])
             swot = int(row[1].replace("Z", ""))
             unit_price =np.single(row[col]/swot)
-            H_I_unit_data[f]["Indirect"]["x"].append(swot)
-            H_I_unit_data[f]["Indirect"]["y"].append(unit_price)
-            H_I_unit_data[f]["Indirect"]["product"].append(row[0]+row[1])
+            label= iden_label(int(search[1]))
+            H_I_unit_data[f][row[0]+row[1]+label+"_Indirect"]["UnitPrice"] = unit_price
+            H_I_unit_data[f][row[0]+row[1]+label+"_Indirect"]["swot"] = row[col]
+            H_I_unit_data[f][row[0]+row[1]+label+"_Indirect"]["seg"] = label
 
 
 
@@ -281,27 +276,25 @@ for ttype, v1 in I_data.items():
 # Draw H and I unit price vs. swot
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
-i=0
+#i=0
 for period, v1 in sorted(H_I_unit_data.items()):
-    i+=1
-    ax = fig.add_subplot(2, math.ceil(len(I_data)/2), i)
-    for method, v2 in sorted(v1.items()):
-        print(period, method, v2["y"])
-        for num in range(len(v2["product"])):
-            search = re.search(r"^(\w)Z(\d+)$", v2["product"][num], re.IGNORECASE).groups()
-            char = search[0]
-            label= iden_label(int(search[1]))
-            search = re.search(r"^(\w)", method, re.IGNORECASE).groups()
-            label = TextPath((0,0), str(char+label+search[0]), linewidth=3)
-            linestyle = iden_company(char)
-            ax.plot(v2["x"], v2["y"], label=v2["product"][num], linestyle="", marker=label, markersize=20)
-    ax.set_title("Period "+period)
-    ax.set_xlabel('Period')
-    ax.set_ylabel('Unit Price')
-labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-fig.legend(handles, labels, loc='lower right')
-fig.suptitle("Price/Swot", fontsize=20)
-fig.savefig('H_I_Swot_Period.png')
+#    i+=1
+#    ax = fig.add_subplot(2, math.ceil(len(I_data)/2), i)
+    for product, v2 in sorted(v1.items()):
+#        print(period, method, v2["y"])
+#        for num in range(len(v2["product"])):
+        print(period, product, v2)
+#            search = re.search(r"^(\w)", method, re.IGNORECASE).groups()
+#            label = TextPath((0,0), str(char+label+search[0]), linewidth=3)
+#            linestyle = iden_company(char)
+#            ax.plot(v2["x"], v2["y"], label=v2["product"][num], linestyle="", marker=label, markersize=20)
+#    ax.set_title("Period "+period)
+#    ax.set_xlabel('Period')
+#    ax.set_ylabel('Unit Price')
+#labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+#fig.legend(handles, labels, loc='lower right')
+#fig.suptitle("Price/Swot", fontsize=20)
+#fig.savefig('H_I_Swot_Period.png')
          
 
 
