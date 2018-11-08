@@ -53,8 +53,10 @@ for f in sorted(args.excel):
         sheet_name = re.search(r"^(\w)_", sheet, re.IGNORECASE).groups()[0]
         data[f_name][sheet_name.upper()]= parse
 
+
 # Deal with E for competitive
 E_data = collections.defaultdict(lambda: collections.defaultdict(dict))
+E_data_extra = pd.DataFrame()
 for f, v1 in sorted(data.items()):
     for r_i, row in v1["E"].iterrows():
         if(row["UDS"] != 0):
@@ -94,13 +96,26 @@ for f, v1 in sorted(data.items()):
             E_data["Total"][row[0]+row[1]]["y"] = [umts]
             E_data["Surplus"][row[0]+row[1]]["unit"] = "Volume"
             E_data["Surplus"][row[0]+row[1]]["x"] = [f]
-            E_data["Surplus"][row[0]+row[1]]["y"] = [row["PC"]-row["UTS"]]
+            E_data["Surplus"][row[0]+row[1]]["y"] = [row["PV"]-row["UTS"]]
             E_data["PC"][row[0]+row[1]]["unit"] = "Volume"
             E_data["PC"][row[0]+row[1]]["x"] = [f]
             E_data["PC"][row[0]+row[1]]["y"] = [row["PC"]]
             E_data["PV"][row[0]+row[1]]["unit"] = "Volume"
             E_data["PV"][row[0]+row[1]]["x"] = [f]
             E_data["PV"][row[0]+row[1]]["y"] = [row["PV"]]
+
+        #For new data
+        swot = int(row[1].replace("Z", ""))
+        label= iden_label(swot)
+        for col in v1["E"].columns[3:]:
+            E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", col] = row[col]
+        E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "period"] = f
+        E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "sale_method"] = "Direct"
+        E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "company"] = row[0]
+        E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "seg"] = label
+        E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "product"] = row[1]
+E_data_extra = E_data_extra.sort_index()
+
 
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
@@ -125,10 +140,87 @@ fig.legend(handles, labels, loc='lower right')
 fig.suptitle('E. Product Sales', fontsize=20)
 fig.savefig('E.png')
 
+# Deal with F for competitive
+F_data = collections.defaultdict(lambda: collections.defaultdict(dict))
+F_data_extra = pd.DataFrame()
+for f, v1 in sorted(data.items()):
+    for r_i, row in v1["F"].iterrows():
+        swot = int(row[1].replace("Z", ""))
+        label= iden_label(swot)
+        print(row[0])
+        if("x" in F_data["Direct"][label][row[0]]):
+            F_data["Direct"][label][row[0]]["x"].append(f)
+            F_data["Direct"][label][row[0]]["ym"].append(row["MDS_P"])
+            F_data["Direct"][label][row[0]]["unitm"].append("MDS_P")
+            F_data["Direct"][label][row[0]]["yu"].append(row["UDS_P"])
+            F_data["Direct"][label][row[0]]["unitu"].append("UDS_P")
+        else: 
+            F_data["Direct"][label][row[0]]["x"] = [f]
+            F_data["Direct"][label][row[0]]["ym"] = [row["MDS_P"]]
+            F_data["Direct"][label][row[0]]["unitm"] = ["MDS_P"]
+            F_data["Direct"][label][row[0]]["yu"] = [row["UDS_P"]]
+            F_data["Direct"][label][row[0]]["unitu"] = ["UDS_P"]
+            
+        if("x" in F_data["Indirect"][label][row[0]]):
+            F_data["Indirect"][label][row[0]]["x"].append(f)
+            F_data["Indirect"][label][row[0]]["ym"].append(row["MIS_P"])
+            F_data["Indirect"][label][row[0]]["unitm"].append("MIS_P")
+            F_data["Indirect"][label][row[0]]["yu"].append(row["UIS_P"])
+            F_data["Indirect"][label][row[0]]["unitu"].append("UIS_P")
+        else: 
+            F_data["Indirect"][label][row[0]]["x"] = [f]
+            F_data["Indirect"][label][row[0]]["ym"] = [row["MIS_P"]]
+            F_data["Indirect"][label][row[0]]["unitm"] = ["MIS_P"]
+            F_data["Indirect"][label][row[0]]["yu"] = [row["UIS_P"]]
+            F_data["Indirect"][label][row[0]]["unitu"] = ["UIS_P"]
+            
+        if("x" in F_data["Total"][label][row[0]]):
+            F_data["Total"][label][row[0]]["x"].append(f)
+            F_data["Total"][label][row[0]]["ym"].append(row["MS_P"])
+            F_data["Total"][label][row[0]]["unitm"].append("MS_P")
+            F_data["Total"][label][row[0]]["yu"].append(row["US_P"])
+            F_data["Total"][label][row[0]]["unitu"].append("US_P")
+        else: 
+            F_data["Total"][label][row[0]]["x"] = [f]
+            F_data["Total"][label][row[0]]["ym"] = [row["MS_P"]]
+            F_data["Total"][label][row[0]]["unitm"] = ["MS_P"]
+            F_data["Total"][label][row[0]]["yu"] = [row["US_P"]]
+            F_data["Total"][label][row[0]]["unitu"] = ["US_P"]
+
+        if("x" in F_data["MS"][label]):
+            F_data["MS"][label]["x"].append(f)
+            F_data["MS"][label]["ym"].append(row["MDS_P"])
+            F_data["MS"][label]["unitm"].append("MDS_P")
+            F_data["MS"][label]["yu"].append(row["UDS_P"])
+            F_data["MS"][label]["unitu"].append("UDS_P")
+        else: 
+            F_data["MS"][label]["x"] = [f]
+            F_data["MS"][label]["ym"] = [row["MDS_P"]]
+            F_data["MS"][label]["unitm"] = ["MDS_P"]
+            F_data["MS"][label]["yu"] = [row["UDS_P"]]
+            F_data["MS"][label]["unitu"] = ["UDS_P"]
+
+
+
+
+        #For new data
+        swot = int(row[1].replace("Z", ""))
+        label= iden_label(swot)
+        for col in v1["F"].columns[3:]:
+            F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", col] = row[col]
+        F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "period"] = f
+        F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "sale_method"] = "Direct"
+        F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "company"] = row[0]
+        F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "seg"] = label
+        F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "product"] = row[1]
+
+F_data_extra = F_data_extra.sort_index()
+
+
+#print(F_data)
 
 # Deal with H for direct competitive
 H_data = collections.defaultdict(lambda: collections.defaultdict(dict))
-H_I_unit_data = collections.defaultdict(lambda: collections.defaultdict(dict))
 for f, v1 in sorted(data.items()):
     #v1["H"]["Type"] = v1["H"]["Company"]+v1["H"]["Product"]
     for r_i, row in v1["H"].iterrows():
@@ -145,7 +237,7 @@ for f, v1 in sorted(data.items()):
                 H_data[col][row[0]+row[1]]["x"] = [f]
                 H_data[col][row[0]+row[1]]["y"] = [row[col]]
   
-        
+H_I_up_sort_period = pd.DataFrame()
 for f, v1 in sorted(data.items()):
     for r_i, row in v1["H"].iterrows():
         for col in v1["H"].columns[2:3]:
@@ -153,9 +245,33 @@ for f, v1 in sorted(data.items()):
             swot = int(row[1].replace("Z", ""))
             unit_price =np.single(row[col]/swot)
             label= iden_label(swot)
-            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Direct"]["UnitPrice"] = unit_price
-            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Direct"]["swot"] = row[col]
-            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Direct"]["seg"] = label
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "unitprice"] = unit_price
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "swot"] = swot
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "UP"] = row[col]
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "seg"] = label
+        
+        SF = row.loc["SF"]
+        SS = row.loc["SS"]
+        TS = row.loc["TS"]
+        total = SF + SS + TS
+        SF_per = np.single(SF/total*100)
+        SS_per = np.single(SS/total*100)
+        TS_per = np.single(TS/total*100)
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "SF_per"] = SF_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "SS_per"] = SS_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "TS_per"] = TS_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "Total_Market_per"] = SF_per + SS_per + TS_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "SF"] = SF
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "SS"] = SS
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "TS"] = TS
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "Total_Market"] = total
+
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "period"] = f
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "sale_method"] = "Direct"
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "company"] = row[0]
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "seg"] = label
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Direct", "product"] = row[1]
+
 
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
@@ -205,9 +321,32 @@ for f, v1 in sorted(data.items()):
             swot = int(row[1].replace("Z", ""))
             unit_price =np.single(row[col]/swot)
             label= iden_label(swot)
-            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Indirect"]["UnitPrice"] = unit_price
-            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Indirect"]["swot"] = row[col]
-            H_I_unit_data[f][label+"_"+row[0]+row[1]+"_Indirect"]["seg"] = label
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "unitprice"] = unit_price
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "swot"] = swot
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "UP"] = row[col]
+            H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "seg"] = label
+
+        SF = row.loc["SF"]
+        SS = row.loc["SS"]
+        TS = row.loc["TS"]
+        total = SF + SS + TS
+        SF_per = np.single(SF/total*100)
+        SS_per = np.single(SS/total*100)
+        TS_per = np.single(TS/total*100)
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "SF_per"] = SF_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "SS_per"] = SS_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "TS_per"] = TS_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "Total_Market_per"] = SF_per + SS_per + TS_per
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "SF"] = SF
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "SS"] = SS
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "TS"] = TS
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "Total_Market"] = total
+
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "period"] = f
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "sale_method"] = "Indirect"
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "company"] = row[0]
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "seg"] = label
+        H_I_up_sort_period.loc[f+label+"_"+row[0]+row[1]+"_Indirect", "product"] = row[1]
 
 
 
@@ -274,29 +413,80 @@ for ttype, v1 in I_data.items():
     fig.savefig('H_I_'+ttype+'.png')
 
 # Draw H and I unit price vs. swot
-fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
-fig.subplots_adjust(hspace=0.3, wspace=0.3)
-#i=0
-for period, v1 in sorted(H_I_unit_data.items()):
-#    i+=1
-#    ax = fig.add_subplot(2, math.ceil(len(I_data)/2), i)
-    for product, v2 in sorted(v1.items()):
-#        print(period, method, v2["y"])
-#        for num in range(len(v2["product"])):
-        print(period, product, v2)
-#            search = re.search(r"^(\w)", method, re.IGNORECASE).groups()
-#            label = TextPath((0,0), str(char+label+search[0]), linewidth=3)
-#            linestyle = iden_company(char)
-#            ax.plot(v2["x"], v2["y"], label=v2["product"][num], linestyle="", marker=label, markersize=20)
-#    ax.set_title("Period "+period)
-#    ax.set_xlabel('Period')
-#    ax.set_ylabel('Unit Price')
-#labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-#fig.legend(handles, labels, loc='lower right')
-#fig.suptitle("Price/Swot", fontsize=20)
-#fig.savefig('H_I_Swot_Period.png')
-         
+H_I_up_sort_period = H_I_up_sort_period.sort_index()
+#H_I_up_sort_period.to_csv("H_I_unitprice_by_period.csv")
 
+period_uniq = H_I_up_sort_period["period"].unique()
+company_uniq = H_I_up_sort_period["company"].unique()
+product_uniq = H_I_up_sort_period["product"].unique()
+sale_method_uniq = H_I_up_sort_period["sale_method"].unique()
+
+E_F_H_I_market_sort_comany =pd.DataFrame()
+od = H_I_up_sort_period
+od2 = E_data_extra
+od3 = F_data_extra
+for per in period_uniq:
+    for c in company_uniq:
+        tmp_pd = pd.DataFrame()
+        tmp_pd2 = pd.DataFrame()
+        tmp_pd3 = pd.DataFrame()
+        for pro in product_uniq:
+            for s in sale_method_uniq:
+                data = od.loc[(od["period"] == per) & (od["company"] == c) & (od["product"] == pro) & (od["sale_method"] == s)]
+                data2 = od2.loc[(od2["period"] == per) & (od2["company"] == c) & (od2["product"] == pro) & (od2["sale_method"] == s)]
+                data3 = od3.loc[(od3["period"] == per) & (od3["company"] == c) & (od3["product"] == pro) & (od3["sale_method"] == s)]
+                if(not data.empty):
+                    tmp_pd = pd.concat([tmp_pd, data])
+                if(not data2.empty):
+                    tmp_pd2 = pd.concat([tmp_pd2, data2])
+                if(not data3.empty):
+                    tmp_pd3 = pd.concat([tmp_pd3, data3])
+    
+        tmp_pd = tmp_pd.sort_index()
+        new_pd = pd.DataFrame()
+        total_mt = 0
+        for index, row in tmp_pd.iterrows():
+            total_mt += row["SF"]
+            total_mt += row["SS"]
+            total_mt += row["TS"]
+            new_pd.loc[index, "unitprice"] = row["unitprice"]
+            new_pd.loc[index, "swot"] = row["swot"]
+            new_pd.loc[index, "UP"] = row["UP"]
+        for index, row in tmp_pd.iterrows():
+            SF_per = np.single(row["SF"]/total_mt*100)
+            SS_per = np.single(row["SS"]/total_mt*100)
+            TS_per = np.single(row["TS"]/total_mt*100)
+            new_pd.loc[index, "SF_per"] = SF_per
+            new_pd.loc[index, "SS_per"] = SS_per
+            new_pd.loc[index, "TS_per"] = TS_per
+            new_pd.loc[index, "Total_Market_per"] = SF_per+SS_per+TS_per
+            new_pd.loc[index, "SF"] = row["SF"]
+            new_pd.loc[index, "SS"] = row["SS"]
+            new_pd.loc[index, "TS"] = row["TS"]
+            new_pd.loc[index, "Total_Market"] = total_mt
+        
+        # Add F sheet
+        for index3, row3 in tmp_pd3.iterrows():
+            for col3 in tmp_pd3.columns[:]:
+                new_pd.loc[index3, col3] = row3[col3]
+        
+        # Add E sheet
+        for index, row in tmp_pd2.iterrows():
+            for col in tmp_pd2.columns[:]:
+                new_pd.loc[index, col] = row[col]
+       
+        # Name
+        for index, row in tmp_pd.iterrows():
+            new_pd.loc[index, "period"] = row["period"]
+            new_pd.loc[index, "sale_method"] = row["sale_method"]
+            new_pd.loc[index, "company"] = row["company"]
+            new_pd.loc[index, "seg"] = row["seg"]
+            new_pd.loc[index, "product"] = row["product"]
+        E_F_H_I_market_sort_comany = pd.concat([E_F_H_I_market_sort_comany, new_pd])
+E_F_H_I_market_sort_comany.to_csv("E_F_H_I_market_sort_comany.csv")
+
+E_F_H_I_market_sort_seg = E_F_H_I_market_sort_comany.sort_values(['period' , 'seg', 'sale_method'])
+E_F_H_I_market_sort_seg.to_csv("E_F_H_I_market_sort_seg.csv")
 
 #with open("data", "rt") as f:
 #    config = json.load(f)
