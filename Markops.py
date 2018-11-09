@@ -54,11 +54,7 @@ def iden_company_color(char):
         color = "b"
     return color
 
-if(os.path.isdir("output")):
-    os.system("rm -rf "+rpt_out)
-os.system("mkdir "+rpt_out)
-writer = pd.ExcelWriter(rpt_out+"/summary.xlsx")
-
+# Main
 data = collections.defaultdict(lambda: collections.defaultdict(dict))
 for f in sorted(args.excel):
     xls = pd.ExcelFile(f)
@@ -69,6 +65,13 @@ for f in sorted(args.excel):
         if(sheet_name == "Z"):
             parse = parse.fillna(0)
         data[f_name][sheet_name.upper()]= parse
+
+# Create output directory
+rpt_out += "_"+f_name
+if(os.path.isdir("output")):
+    os.system("rm -rf "+rpt_out)
+os.system("mkdir "+rpt_out)
+writer = pd.ExcelWriter(rpt_out+"/summary.xlsx")
 
 # Deal with E for competitive
 E_data = collections.defaultdict(lambda: collections.defaultdict(dict))
