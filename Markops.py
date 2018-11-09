@@ -8,11 +8,10 @@ from matplotlib.text import TextPath
 
 x_lower = 1
 x_upper = 5
+writer = pd.ExcelWriter("summary.xlsx")
 
 parser = argparse.ArgumentParser(description='Process for Markops')
 parser.add_argument('-excel',nargs='+', help='Input excel files', required=True)
-#parser.add_argument('config',nargs='?', help='Input config file', default="naming")
-#parser.add_argument('config',nargs='?', help='Input config file', default="naming")
 
 try:
     args = parser.parse_args()
@@ -50,7 +49,7 @@ def iden_company_color(char):
     elif(re.search(r"^K$", char, re.IGNORECASE)):
         color = "g"
     elif(re.search(r"^P$", char, re.IGNORECASE)):
-        color = "black"
+        color = "y"
     else: 
         color = "b"
     return color
@@ -62,8 +61,9 @@ for f in sorted(args.excel):
     for sheet in sorted(xls.sheet_names):
         parse = xls.parse(sheet)
         sheet_name = re.search(r"^(\w)_", sheet, re.IGNORECASE).groups()[0]
+        if(sheet_name == "Z"):
+            parse = parse.fillna(0)
         data[f_name][sheet_name.upper()]= parse
-
 
 # Deal with E for competitive
 E_data = collections.defaultdict(lambda: collections.defaultdict(dict))
@@ -160,7 +160,6 @@ for f, v1 in sorted(data.items()):
         label= iden_label(swot)
 
         if(row["MDS_P"] != 0):
-
             if("x" in F_data["Direct"][label][row[0]+row[1]]):
                 F_data["Direct"][label][row[0]+row[1]]["x"].append(float(f))
                 F_data["Direct"][label][row[0]+row[1]]["ym"].append(row["MDS_P"])
@@ -184,9 +183,30 @@ for f, v1 in sorted(data.items()):
                 F_data["Indirect"][label][row[0]+row[1]]["yu"] = [row["UIS_P"]]
                 F_data["Indirect"][label][row[0]+row[1]]["unitu"] = "UIS_P"
             
-
-
-
+        if(row["MS_P"] != 0):
+            if("x" in F_data["MarketShare"][label][row[0]+row[1]]):
+                F_data["MarketShare"][label][row[0]+row[1]]["x"].append(float(f))
+                F_data["MarketShare"][label][row[0]+row[1]]["ym"].append(row["MS_P"])
+                F_data["MarketShare"][label][row[0]+row[1]]["yu"].append(row["US_P"])
+            else: 
+                F_data["MarketShare"][label][row[0]+row[1]]["x"] = [float(f)]
+                F_data["MarketShare"][label][row[0]+row[1]]["ym"] = [row["MS_P"]]
+                F_data["MarketShare"][label][row[0]+row[1]]["unitm"] = "MS_P"
+                F_data["MarketShare"][label][row[0]+row[1]]["yu"] = [row["US_P"]]
+                F_data["MarketShare"][label][row[0]+row[1]]["unitu"] = "US_P"
+            
+        if(row["MTS_P"] != 0):
+            if("x" in F_data["Total"][row[0]+row[1]]):
+                F_data["Total"][row[0]+row[1]]["x"].append(float(f))
+                F_data["Total"][row[0]+row[1]]["ym"].append(row["MTS_P"])
+                F_data["Total"][row[0]+row[1]]["yu"].append(row["UTS_P"])
+            else: 
+                F_data["Total"][row[0]+row[1]]["x"] = [float(f)]
+                F_data["Total"][row[0]+row[1]]["ym"] = [row["MTS_P"]]
+                F_data["Total"][row[0]+row[1]]["unitm"] = "MTS_P"
+                F_data["Total"][row[0]+row[1]]["yu"] = [row["UTS_P"]]
+                F_data["Total"][row[0]+row[1]]["unitu"] = "UTS_P"
+            
         #For new data
         swot = int(row[1].replace("Z", ""))
         label= iden_label(swot)
@@ -216,18 +236,17 @@ def autolabel_company(rects, label):
         ax.text(rect.get_x()+rect.get_width()/2., rect.get_y()+rect.get_height()+5, label, ha='center', va='bottom', color='b')
 
 bar_width = 0.2
+bar_width_t = 0.05
 for ttype, v1 in F_data.items():
-    fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
-    fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    i = 0
-    j = 0 
-    for quality, v2 in sorted(v1.items()):
-        j += 1
-        ax = fig.add_subplot(2, math.ceil(len(v1.keys())/2), j)
+    if(re.search(r"Total", ttype)):
+        fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
+        fig.subplots_adjust(hspace=0.3, wspace=0.3)
+        i = 0
+        ax = fig.add_subplot(111)
         save_fig = []
         save_labels = []
         save_company = []
-        for product, v3 in sorted(v2.items()):
+        for product, v2 in sorted(v1.items()):
             i += 1
             search = re.search(r"^(\w)Z(\d+)$", product, re.IGNORECASE).groups()
             char = search[0]
@@ -235,26 +254,61 @@ for ttype, v1 in F_data.items():
             save_company.append(char+search[1])
             color = iden_company_color(search[0])
             save_labels.append(char)
-            #print(search[0], color)
-            save_fig.append(ax.bar([x+bar_width*i for x in v3["x"]], v3["ym"], width=bar_width, label=label, align='center', color=color, edgecolor="black"))
-            print(ttype, quality, product, v3["x"], v3["ym"])
-
-
-        ax.legend( save_fig, save_company, loc='upper center' ) 
+            save_fig.append(ax.bar([x+bar_width_t*i for x in v2["x"]], v2["ym"], width=bar_width_t, label=label, align='center', color=color, edgecolor="black"))
+        
+        ax.legend( save_fig, save_company, loc='upper left', ncol=4, fontsize="x-small") 
         for fig_i in range(len(save_fig)):
             autolabel_value(save_fig[fig_i])
             autolabel_company(save_fig[fig_i], save_labels[fig_i])
-        ax.set_title("Quality: "+quality)
-        #ax.set_xlim([x_lower,x_upper])
-        ax.set_ylim([0,100])
-        ax.autoscale(tight=True)
+        ax.set_title("Integration")
+        ax.set_xlim([x_lower,x_upper])
+        #ax.set_ylim([0,100])
         ax.set_xlabel('Period')
-        ax.set_ylabel(v3["unitm"])
-#    fig.legend(handles, labels, loc='lower right')
-    fig.suptitle('F. Money'+ttype, fontsize=20)
-    fig.savefig('F_Money_'+ttype+'.png')
+        ax.set_ylabel(v2["unitm"])
+        fig.suptitle('F. Money_MS_'+ttype, fontsize=20)
+        fig.savefig('F_Money_MS_'+ttype+'.png')
 
-exit()
+    else:
+        fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
+        fig.subplots_adjust(hspace=0.3, wspace=0.3)
+        j = 0 
+        for quality, v2 in sorted(v1.items()):
+            i = 0
+            j += 1
+            ax = fig.add_subplot(2, math.ceil(len(v1.keys())/2), j)
+            save_fig = []
+            save_labels = []
+            save_company = []
+            for product, v3 in sorted(v2.items()):
+                i += 1
+                search = re.search(r"^(\w)Z(\d+)$", product, re.IGNORECASE).groups()
+                char = search[0]
+                label= char+iden_label(int(search[1]))
+                save_company.append(char+search[1])
+                color = iden_company_color(search[0])
+                save_labels.append(char)
+                #print(search[0], color)
+                save_fig.append(ax.bar([x+bar_width*i for x in v3["x"]], v3["ym"], width=bar_width, label=label, align='center', color=color, edgecolor="black"))
+                #print(ttype, quality, product, v3["x"], v3["ym"])
+
+
+            ax.legend( save_fig, save_company, loc='upper left', ncol=4, fontsize="x-small") 
+            for fig_i in range(len(save_fig)):
+                autolabel_value(save_fig[fig_i])
+                autolabel_company(save_fig[fig_i], save_labels[fig_i])
+            ax.set_title("Quality: "+quality)
+            ax.set_xlim([x_lower,x_upper])
+            ax.set_ylim([0,100])
+            #ax.autoscale(tight=True)
+            ax.set_xlabel('Period')
+            ax.set_ylabel(v3["unitm"])
+        if(re.search(r"MarketShare", ttype, re.IGNORECASE)):
+            real_type = "Direct+Indirect"
+        else:
+            real_type = ttype
+        fig.suptitle('F. Money_MS_'+real_type, fontsize=20)
+        fig.savefig('F_Money_MS_'+real_type+'.png')
+
 
 # Deal with H for direct competitive
 H_data = collections.defaultdict(lambda: collections.defaultdict(dict))
@@ -453,6 +507,11 @@ for ttype, v1 in I_data.items():
 H_I_up_sort_period = H_I_up_sort_period.sort_index()
 #H_I_up_sort_period.to_csv("H_I_unitprice_by_period.csv")
 
+# Real E_H_I
+def color_larger_1000_red(val):
+    color = 'red' if val > 1000 else 'black'
+    return 'color: %s' % color
+
 period_uniq = H_I_up_sort_period["period"].unique()
 company_uniq = H_I_up_sort_period["company"].unique()
 product_uniq = H_I_up_sort_period["product"].unique()
@@ -469,11 +528,11 @@ for per in period_uniq:
         tmp_pd3 = pd.DataFrame()
         for pro in product_uniq:
             for s in sale_method_uniq:
-                data = od.loc[(od["period"] == per) & (od["company"] == c) & (od["product"] == pro) & (od["sale_method"] == s)]
+                data1 = od.loc[(od["period"] == per) & (od["company"] == c) & (od["product"] == pro) & (od["sale_method"] == s)]
                 data2 = od2.loc[(od2["period"] == per) & (od2["company"] == c) & (od2["product"] == pro) & (od2["sale_method"] == s)]
                 data3 = od3.loc[(od3["period"] == per) & (od3["company"] == c) & (od3["product"] == pro) & (od3["sale_method"] == s)]
-                if(not data.empty):
-                    tmp_pd = pd.concat([tmp_pd, data])
+                if(not data1.empty):
+                    tmp_pd = pd.concat([tmp_pd, data1])
                 if(not data2.empty):
                     tmp_pd2 = pd.concat([tmp_pd2, data2])
                 if(not data3.empty):
@@ -501,7 +560,9 @@ for per in period_uniq:
             new_pd.loc[index, "SS"] = row["SS"]
             new_pd.loc[index, "TS"] = row["TS"]
             new_pd.loc[index, "Total_Market"] = total_mt
+            
         
+
         # Add F sheet
         for index3, row3 in tmp_pd3.iterrows():
             for col3 in tmp_pd3.columns[:]:
@@ -520,10 +581,40 @@ for per in period_uniq:
             new_pd.loc[index, "seg"] = row["seg"]
             new_pd.loc[index, "product"] = row["product"]
         E_F_H_I_market_sort_comany = pd.concat([E_F_H_I_market_sort_comany, new_pd])
-E_F_H_I_market_sort_comany.to_csv("E_F_H_I_market_sort_comany.csv")
+#E_F_H_I_market_sort_comany.to_csv("E_F_H_I_market_sort_comany.csv")
+style = E_F_H_I_market_sort_comany.style.applymap(color_larger_1000_red, subset = ["SF", "SS", "TS"])
+E_F_H_I_market_sort_comany.to_excel(writer, "E_F_H_I_market_sort_comany")
+style.to_excel(writer, "E_F_H_I_market_sort_comany")
 
+#E_F_H_I_market_sort_seg.to_csv("E_F_H_I_market_sort_seg.csv")
 E_F_H_I_market_sort_seg = E_F_H_I_market_sort_comany.sort_values(['period' , 'seg', 'sale_method'])
-E_F_H_I_market_sort_seg.to_csv("E_F_H_I_market_sort_seg.csv")
+style = E_F_H_I_market_sort_seg.style.applymap(color_larger_1000_red, subset = ["SF", "SS", "TS"])
+E_F_H_I_market_sort_seg.to_excel(writer, "E_F_H_I_market_sort_seg")
+style.to_excel(writer, "E_F_H_I_market_sort_seg")
+
+
+# Z(Projdction) vs C(real) for product contribution
+Z_C_data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+for f, v1 in sorted(data.items()):
+    for row in v1["Z"]:
+        for ttype, value in v1["Z"][row].iteritems():
+            #print(f, row, ttype, value)
+            Z_C_data[f][row][ttype]["project"] = value
+        for ttype, value in v1["C"][row].iteritems():
+            Z_C_data[f][row][ttype]["real"] = value
+
+new_Z_C = pd.DataFrame()
+for period, v1 in sorted(Z_C_data.items()):
+    for product, v2 in sorted(v1.items()):
+        for ttype, v3 in v2.items():
+            #print(period, product, ttype, v3)
+            new_Z_C.loc[period+"_"+product+"_project", ttype] = v3["project"]
+            new_Z_C.loc[period+"_"+product+"_real", ttype] = v3["real"]
+            if(v3["real"] != 0 and v3["project"]!=0):
+                new_Z_C.loc[period+"_"+product+"_real", ttype+"_compare"] = np.single(v3["real"]/v3["project"]*100)
+new_Z_C.to_excel(writer, "Z_C_project_vs_real")
+
+
 
 #with open("data", "rt") as f:
 #    config = json.load(f)
@@ -532,4 +623,4 @@ E_F_H_I_market_sort_seg.to_csv("E_F_H_I_market_sort_seg.csv")
 #with open('data.json', 'w') as outfile:
 #    json.dump(E_data, outfile)
 
-
+writer.save()
