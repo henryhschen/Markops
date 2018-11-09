@@ -44,6 +44,17 @@ def iden_company(char):
         linestyle = "-"
     return linestyle
 
+def iden_company_color(char):
+    if(re.search(r"^A$", char, re.IGNORECASE)):
+        color = "r"
+    elif(re.search(r"^K$", char, re.IGNORECASE)):
+        color = "g"
+    elif(re.search(r"^P$", char, re.IGNORECASE)):
+        color = "black"
+    else: 
+        color = "b"
+    return color
+
 data = collections.defaultdict(lambda: collections.defaultdict(dict))
 for f in sorted(args.excel):
     xls = pd.ExcelFile(f)
@@ -141,65 +152,38 @@ fig.suptitle('E. Product Sales', fontsize=20)
 fig.savefig('E.png')
 
 # Deal with F for competitive
-F_data = collections.defaultdict(lambda: collections.defaultdict(dict))
+F_data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
 F_data_extra = pd.DataFrame()
 for f, v1 in sorted(data.items()):
     for r_i, row in v1["F"].iterrows():
         swot = int(row[1].replace("Z", ""))
         label= iden_label(swot)
-        print(row[0])
-        if("x" in F_data["Direct"][label][row[0]]):
-            F_data["Direct"][label][row[0]]["x"].append(f)
-            F_data["Direct"][label][row[0]]["ym"].append(row["MDS_P"])
-            F_data["Direct"][label][row[0]]["unitm"].append("MDS_P")
-            F_data["Direct"][label][row[0]]["yu"].append(row["UDS_P"])
-            F_data["Direct"][label][row[0]]["unitu"].append("UDS_P")
-        else: 
-            F_data["Direct"][label][row[0]]["x"] = [f]
-            F_data["Direct"][label][row[0]]["ym"] = [row["MDS_P"]]
-            F_data["Direct"][label][row[0]]["unitm"] = ["MDS_P"]
-            F_data["Direct"][label][row[0]]["yu"] = [row["UDS_P"]]
-            F_data["Direct"][label][row[0]]["unitu"] = ["UDS_P"]
-            
-        if("x" in F_data["Indirect"][label][row[0]]):
-            F_data["Indirect"][label][row[0]]["x"].append(f)
-            F_data["Indirect"][label][row[0]]["ym"].append(row["MIS_P"])
-            F_data["Indirect"][label][row[0]]["unitm"].append("MIS_P")
-            F_data["Indirect"][label][row[0]]["yu"].append(row["UIS_P"])
-            F_data["Indirect"][label][row[0]]["unitu"].append("UIS_P")
-        else: 
-            F_data["Indirect"][label][row[0]]["x"] = [f]
-            F_data["Indirect"][label][row[0]]["ym"] = [row["MIS_P"]]
-            F_data["Indirect"][label][row[0]]["unitm"] = ["MIS_P"]
-            F_data["Indirect"][label][row[0]]["yu"] = [row["UIS_P"]]
-            F_data["Indirect"][label][row[0]]["unitu"] = ["UIS_P"]
-            
-        if("x" in F_data["Total"][label][row[0]]):
-            F_data["Total"][label][row[0]]["x"].append(f)
-            F_data["Total"][label][row[0]]["ym"].append(row["MS_P"])
-            F_data["Total"][label][row[0]]["unitm"].append("MS_P")
-            F_data["Total"][label][row[0]]["yu"].append(row["US_P"])
-            F_data["Total"][label][row[0]]["unitu"].append("US_P")
-        else: 
-            F_data["Total"][label][row[0]]["x"] = [f]
-            F_data["Total"][label][row[0]]["ym"] = [row["MS_P"]]
-            F_data["Total"][label][row[0]]["unitm"] = ["MS_P"]
-            F_data["Total"][label][row[0]]["yu"] = [row["US_P"]]
-            F_data["Total"][label][row[0]]["unitu"] = ["US_P"]
 
-        if("x" in F_data["MS"][label]):
-            F_data["MS"][label]["x"].append(f)
-            F_data["MS"][label]["ym"].append(row["MDS_P"])
-            F_data["MS"][label]["unitm"].append("MDS_P")
-            F_data["MS"][label]["yu"].append(row["UDS_P"])
-            F_data["MS"][label]["unitu"].append("UDS_P")
-        else: 
-            F_data["MS"][label]["x"] = [f]
-            F_data["MS"][label]["ym"] = [row["MDS_P"]]
-            F_data["MS"][label]["unitm"] = ["MDS_P"]
-            F_data["MS"][label]["yu"] = [row["UDS_P"]]
-            F_data["MS"][label]["unitu"] = ["UDS_P"]
+        if(row["MDS_P"] != 0):
 
+            if("x" in F_data["Direct"][label][row[0]+row[1]]):
+                F_data["Direct"][label][row[0]+row[1]]["x"].append(float(f))
+                F_data["Direct"][label][row[0]+row[1]]["ym"].append(row["MDS_P"])
+                F_data["Direct"][label][row[0]+row[1]]["yu"].append(row["UDS_P"])
+            else: 
+                F_data["Direct"][label][row[0]+row[1]]["x"] = [float(f)]
+                F_data["Direct"][label][row[0]+row[1]]["ym"] = [row["MDS_P"]]
+                F_data["Direct"][label][row[0]+row[1]]["unitm"] = "MDS_P"
+                F_data["Direct"][label][row[0]+row[1]]["yu"] = [row["UDS_P"]]
+                F_data["Direct"][label][row[0]+row[1]]["unitu"] = "UDS_P"
+
+        if(row["MIS_P"] != 0):
+            if("x" in F_data["Indirect"][label][row[0]+row[1]]):
+                F_data["Indirect"][label][row[0]+row[1]]["x"].append(float(f))
+                F_data["Indirect"][label][row[0]+row[1]]["ym"].append(row["MIS_P"])
+                F_data["Indirect"][label][row[0]+row[1]]["yu"].append(row["UIS_P"])
+            else: 
+                F_data["Indirect"][label][row[0]+row[1]]["x"] = [float(f)]
+                F_data["Indirect"][label][row[0]+row[1]]["ym"] = [row["MIS_P"]]
+                F_data["Indirect"][label][row[0]+row[1]]["unitm"] = "MIS_P"
+                F_data["Indirect"][label][row[0]+row[1]]["yu"] = [row["UIS_P"]]
+                F_data["Indirect"][label][row[0]+row[1]]["unitu"] = "UIS_P"
+            
 
 
 
@@ -216,8 +200,61 @@ for f, v1 in sorted(data.items()):
 
 F_data_extra = F_data_extra.sort_index()
 
+fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
+ax = fig.add_subplot(111)
 
-#print(F_data)
+
+def autolabel_value(rects):
+    for rect in rects:
+        h = rect.get_height()
+        ax.text(rect.get_x()+rect.get_width()/2., rect.get_y()+rect.get_height()+0.01, '%d'%int(h),
+                ha='center', va='bottom', color='b')
+def autolabel_company(rects, label):
+    for rect in rects:
+        h = rect.get_height()
+        ax.text(rect.get_x()+rect.get_width()/2., rect.get_y()+rect.get_height()+5, label, ha='center', va='bottom', color='b')
+
+bar_width = 0.2
+for ttype, v1 in F_data.items():
+    fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
+    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+    i = 0
+    j = 0 
+    for quality, v2 in sorted(v1.items()):
+        j += 1
+        ax = fig.add_subplot(2, math.ceil(len(v1.keys())/2), j)
+        save_fig = []
+        save_labels = []
+        save_company = []
+        for product, v3 in sorted(v2.items()):
+            i += 1
+            search = re.search(r"^(\w)Z(\d+)$", product, re.IGNORECASE).groups()
+            char = search[0]
+            label= char+iden_label(int(search[1]))
+            save_company.append(char+search[1])
+            color = iden_company_color(search[0])
+            save_labels.append(char)
+            #print(search[0], color)
+            save_fig.append(ax.bar([x+bar_width*i for x in v3["x"]], v3["ym"], width=bar_width, label=label, align='center', color=color, edgecolor="black"))
+            print(ttype, quality, product, v3["x"], v3["ym"])
+
+
+        ax.legend( save_fig, save_company, loc='upper center' ) 
+        for fig_i in range(len(save_fig)):
+            autolabel_value(save_fig[fig_i])
+            autolabel_company(save_fig[fig_i], save_labels[fig_i])
+        ax.set_title("Quality: "+quality)
+        #ax.set_xlim([x_lower,x_upper])
+        ax.set_ylim([0,100])
+        ax.autoscale(tight=True)
+        ax.set_xlabel('Period')
+        ax.set_ylabel(v3["unitm"])
+#    fig.legend(handles, labels, loc='lower right')
+    fig.suptitle('F. Money'+ttype, fontsize=20)
+    fig.savefig('F_Money_'+ttype+'.png')
+
+exit()
 
 # Deal with H for direct competitive
 H_data = collections.defaultdict(lambda: collections.defaultdict(dict))
