@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3.6
 
-import math, re, json, collections, argparse, matplotlib
+import math, re, json, collections, argparse, matplotlib, os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,7 +8,7 @@ from matplotlib.text import TextPath
 
 x_lower = 1
 x_upper = 5
-writer = pd.ExcelWriter("summary.xlsx")
+rpt_out = "output"
 
 parser = argparse.ArgumentParser(description='Process for Markops')
 parser.add_argument('-excel',nargs='+', help='Input excel files', required=True)
@@ -54,10 +54,15 @@ def iden_company_color(char):
         color = "b"
     return color
 
+if(os.path.isdir("output")):
+    os.system("rm -rf "+rpt_out)
+os.system("mkdir "+rpt_out)
+writer = pd.ExcelWriter(rpt_out+"/summary.xlsx")
+
 data = collections.defaultdict(lambda: collections.defaultdict(dict))
 for f in sorted(args.excel):
     xls = pd.ExcelFile(f)
-    f_name = re.search(r"^Period(\d)\.", f, re.IGNORECASE).groups()[0]
+    f_name = re.search(r"Period(\d)\.", f, re.IGNORECASE).groups()[0]
     for sheet in sorted(xls.sheet_names):
         parse = xls.parse(sheet)
         sheet_name = re.search(r"^(\w)_", sheet, re.IGNORECASE).groups()[0]
@@ -149,7 +154,7 @@ handles, labels = ax.get_legend_handles_labels()
 labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
 fig.legend(handles, labels, loc='lower right')
 fig.suptitle('E. Product Sales', fontsize=20)
-fig.savefig('E.png')
+fig.savefig(rpt_out+'/E.png')
 
 # Deal with F for competitive
 F_data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
@@ -266,7 +271,7 @@ for ttype, v1 in F_data.items():
         ax.set_xlabel('Period')
         ax.set_ylabel(v2["unitm"])
         fig.suptitle('F. Money_MS_'+ttype, fontsize=20)
-        fig.savefig('F_Money_MS_'+ttype+'.png')
+        fig.savefig(rpt_out+'/F_Money_MS_'+ttype+'.png')
 
     else:
         fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
@@ -307,7 +312,7 @@ for ttype, v1 in F_data.items():
         else:
             real_type = ttype
         fig.suptitle('F. Money_MS_'+real_type, fontsize=20)
-        fig.savefig('F_Money_MS_'+real_type+'.png')
+        fig.savefig(rpt_out+'/F_Money_MS_'+real_type+'.png')
 
 
 # Deal with H for direct competitive
@@ -385,7 +390,7 @@ handles, labels = ax.get_legend_handles_labels()
 labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
 fig.legend(handles, labels, loc='lower right')
 fig.suptitle('H. Direct with Competitive', fontsize=20)
-fig.savefig('H.png')
+fig.savefig(rpt_out+'/H.png')
 
 
 # Deal with I for indirect competitive
@@ -462,7 +467,7 @@ handles, labels = ax.get_legend_handles_labels()
 labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
 fig.legend(handles, labels, loc='lower right')
 fig.suptitle('I. Inirect with Competitive', fontsize=20)
-fig.savefig('I.png')
+fig.savefig(rpt_out+'/I.png')
 
 # Deal with H and I
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
@@ -501,7 +506,7 @@ for ttype, v1 in I_data.items():
     labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
     fig.legend(handles, labels, loc='lower right')
     fig.suptitle(ttype, fontsize=20)
-    fig.savefig('H_I_'+ttype+'.png')
+    fig.savefig(rpt_out+'/H_I_'+ttype+'.png')
 
 # Draw H and I unit price vs. swot
 H_I_up_sort_period = H_I_up_sort_period.sort_index()
@@ -561,8 +566,6 @@ for per in period_uniq:
             new_pd.loc[index, "TS"] = row["TS"]
             new_pd.loc[index, "Total_Market"] = total_mt
             
-        
-
         # Add F sheet
         for index3, row3 in tmp_pd3.iterrows():
             for col3 in tmp_pd3.columns[:]:

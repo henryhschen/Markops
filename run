@@ -1,1 +1,1 @@
-./Markops.py -excel *.xlsx
+./Markops.py -excel source/P*.xlsx
