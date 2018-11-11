@@ -6,8 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.text import TextPath
 
-x_lower = 1
-x_upper = 5
+x_lower = 0
+x_upper = 2
 rpt_out = "output"
 
 parser = argparse.ArgumentParser(description='Process for Markops')
@@ -605,19 +605,22 @@ for f, v1 in sorted(data.items()):
     for row in v1["Z"]:
         for ttype, value in v1["Z"][row].iteritems():
             #print(f, row, ttype, value)
-            Z_C_data[f][row][ttype]["project"] = value
+            f_next = str(int(f)+1)
+            Z_C_data[f_next][row][ttype]["project"] = value
         for ttype, value in v1["C"][row].iteritems():
             Z_C_data[f][row][ttype]["real"] = value
 
 new_Z_C = pd.DataFrame()
+
 for period, v1 in sorted(Z_C_data.items()):
     for product, v2 in sorted(v1.items()):
         for ttype, v3 in v2.items():
-            #print(period, product, ttype, v3)
-            new_Z_C.loc[period+"_"+product+"_project", ttype] = v3["project"]
-            new_Z_C.loc[period+"_"+product+"_real", ttype] = v3["real"]
-            if(v3["real"] != 0 and v3["project"]!=0):
-                new_Z_C.loc[period+"_"+product+"_real", ttype+"_compare"] = np.single(v3["real"]/v3["project"]*100)
+            if("project" in v3 and "real" in v3):
+                #print(period, product, ttype, v3)
+                new_Z_C.loc[period+"_"+product+"_project", ttype] = v3["project"]
+                new_Z_C.loc[period+"_"+product+"_real", ttype] = v3["real"]
+                if(v3["real"] != 0 and v3["project"]!=0):
+                    new_Z_C.loc[period+"_"+product+"_real", ttype+"_compare"] = np.single(v3["real"]/v3["project"]*100)
 new_Z_C.to_excel(writer, "Z_C_project_vs_real")
 
 
