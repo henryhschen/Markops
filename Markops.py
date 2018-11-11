@@ -68,14 +68,66 @@ for f in sorted(args.excel):
 
 # Create output directory
 rpt_out += "_"+f_name
-if(os.path.isdir("output")):
+if(os.path.isdir(rpt_out)):
     os.system("rm -rf "+rpt_out)
 os.system("mkdir "+rpt_out)
 writer = pd.ExcelWriter(rpt_out+"/summary.xlsx")
 
+# Deal with B for competitive
+B_data_extra = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+for f, v1 in sorted(data.items()):
+    for c_i, value in v1["B"].iteritems():
+        B_data_extra[f][c_i]["UVMC"] = value["UVMC"]
+        B_data_extra[f][c_i]["IMSP"] = value["IMSP"]
+
+# Deal with C for competitive
+C_data_extra = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+for f, v1 in sorted(data.items()):
+    for c_i, value in v1["C"].iteritems():
+        C_data_extra[f][c_i]["S"] = value["S"]
+        C_data_extra[f][c_i]["CGS"] = value["CGS"]
+        C_data_extra[f][c_i]["FMC"] = value["FMC"]
+
+new_B_C = pd.DataFrame()
+new_C = pd.DataFrame()
+for per, v1 in sorted(C_data_extra.items()):
+    for pro, v2 in sorted(v1.items()):
+
+        # For B_C
+        if(re.search(r"^Z", pro, re.IGNORECASE)):
+            new_B_C.loc[per+"_"+pro, "UVMC"] = B_data_extra[per][pro]["UVMC"]
+            new_B_C.loc[per+"_"+pro, "FMC"] = C_data_extra[per][pro]["FMC"]
+            new_B_C.loc[per+"_"+pro, "UVMC/FMC"] = np.single(B_data_extra[per][pro]["UVMC"]/C_data_extra[per][pro]["FMC"])
+            new_B_C.loc[per+"_"+pro, "UVMC/FMC+UVMC"] = np.single(B_data_extra[per][pro]["UVMC"]/C_data_extra[per][pro]["FMC"]+B_data_extra[per][pro]["UVMC"])
+
+
+        #print(per, pro, v2)
+        new_C.loc[per+"_"+pro, "Product"] = pro
+        new_C.loc[per+"_"+pro, "S"] = v2["S"]
+        if(re.search(r"^Z", pro, re.IGNORECASE)):
+            new_C.loc[per+"_"+pro, "S/S_total"] = np.single(v2["S"]/C_data_extra[per]["Total"]["S"]*100)
+        else:
+            new_C.loc[per+"_"+pro, "S/S_total"] = "Nan"
+        new_C.loc[per+"_"+pro, "CGS"] = v2["CGS"]
+        if(re.search(r"^Z", pro, re.IGNORECASE)):
+            new_C.loc[per+"_"+pro, "CGS/S_total"] = np.single(v2["CGS"]/C_data_extra[per]["Total"]["S"]*100)
+        else:
+            new_C.loc[per+"_"+pro, "CGS/S_total"] = "Nan"
+        new_C.loc[per+"_"+pro, "FMC"] = v2["FMC"]
+        if(re.search(r"^Z", pro, re.IGNORECASE)):
+            new_C.loc[per+"_"+pro, "FMC/S_total"] = np.single(v2["CGS"]/C_data_extra[per]["Total"]["S"]*100)
+        else:
+            new_C.loc[per+"_"+pro, "FMC/S_total"] = "Nan"
+        new_C.loc[per+"_"+pro, "period"] = per
+        new_C.loc[per+"_"+pro, "product"] = pro
+
+new_B_C.to_excel(writer, "B_UVMC_FMC")
+new_C.to_excel(writer, "C_CGS_FMC_S")
+
 # Deal with E for competitive
 E_data = collections.defaultdict(lambda: collections.defaultdict(dict))
 E_data_extra = pd.DataFrame()
+E_data_extra2 = pd.DataFrame()
 for f, v1 in sorted(data.items()):
     for r_i, row in v1["E"].iterrows():
         if(row["UDS"] != 0):
@@ -133,7 +185,19 @@ for f, v1 in sorted(data.items()):
         E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "company"] = row[0]
         E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "seg"] = label
         E_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "product"] = row[1]
+
+        # Deal with PC & PV
+        E_data_extra2.loc[f+label+"_"+row[0]+row[1], "PV"] = row["PV"]
+        E_data_extra2.loc[f+label+"_"+row[0]+row[1], "PC"] = row["PC"]
+        E_data_extra2.loc[f+label+"_"+row[0]+row[1], "Utilizaton"] = np.single(row["PV"]/row["PC"]*100)
+        E_data_extra2.loc[f+label+"_"+row[0]+row[1], "period"] = f
+        E_data_extra2.loc[f+label+"_"+row[0]+row[1], "seg"] = label
+        E_data_extra2.loc[f+label+"_"+row[0]+row[1], "company"] = row[0]
+        E_data_extra2.loc[f+label+"_"+row[0]+row[1], "product"] = row[1]
+
 E_data_extra = E_data_extra.sort_index()
+E_data_extra2 = E_data_extra2.sort_index()
+E_data_extra2.to_excel(writer, "E_PV_PC")
 
 
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
@@ -398,6 +462,7 @@ fig.savefig(rpt_out+'/H.png')
 
 # Deal with I for indirect competitive
 I_data = collections.defaultdict(lambda: collections.defaultdict(dict))
+I_data_extra = collections.defaultdict(lambda: collections.defaultdict(dict))
 for f, v1 in sorted(data.items()):
     for r_i, row in v1["I"].iterrows():
         for col in v1["I"].columns[2:]:
@@ -415,6 +480,14 @@ for f, v1 in sorted(data.items()):
 
 for f, v1 in sorted(data.items()):
     for r_i, row in v1["I"].iterrows():
+        swot = int(row[1].replace("Z", ""))
+        if(re.search(r"^W", row["Company"], re.IGNORECASE)):
+            #print(r_i, row)
+            I_data_extra[f][row["Product"]]["UP"] = row["UP"]
+            I_data_extra[f][row["Product"]]["number"] = swot
+
+        #C_data_extra[f][c_i]["S"] = value["S"]
+
         for col in v1["I"].columns[2:3]:
             #print(col, row[col], row[0]+row[1])
             swot = int(row[1].replace("Z", ""))
@@ -472,6 +545,19 @@ fig.legend(handles, labels, loc='lower right')
 fig.suptitle('I. Inirect with Competitive', fontsize=20)
 fig.savefig(rpt_out+'/I.png')
 
+new_B_I = pd.DataFrame()
+for per, v1 in sorted(I_data_extra.items()):
+    for pro, v2 in sorted(v1.items()):
+        #print(f, pro, B_data_extra[per][pro]["IMSP"], I_data_extra[per][pro]["UP"])
+        new_B_I.loc[per+"_"+pro+"_Indirect", "IMSP"] = B_data_extra[per][pro]["IMSP"]
+        new_B_I.loc[per+"_"+pro+"_Indirect", "UP"] = I_data_extra[per][pro]["UP"]
+        new_B_I.loc[per+"_"+pro+"_Indirect", "UP/Swot"] = np.single(I_data_extra[per][pro]["UP"]/I_data_extra[per][pro]["number"])
+        new_B_I.loc[per+"_"+pro+"_Indirect", "UP-IMSP+UP*1.25"] = I_data_extra[per][pro]["UP"] - B_data_extra[per][pro]["IMSP"] + B_data_extra[per][pro]["IMSP"]*1.25
+        new_B_I.loc[per+"_"+pro+"_Indirect", "(UP-IMSP+UP*1.25)/UP"] = np.single((I_data_extra[per][pro]["UP"] - B_data_extra[per][pro]["IMSP"] + B_data_extra[per][pro]["IMSP"]*1.25)/I_data_extra[per][pro]["number"])
+        new_B_I.loc[per+"_"+pro+"_Indirect", "100*(UP-IMSP)/UP"] = np.single((I_data_extra[per][pro]["UP"] - B_data_extra[per][pro]["IMSP"]) / I_data_extra[per][pro]["UP"] *100)
+
+new_B_I.to_excel(writer, "B_I_indirect")
+
 # Deal with H and I
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
@@ -515,6 +601,40 @@ for ttype, v1 in I_data.items():
 H_I_up_sort_period = H_I_up_sort_period.sort_index()
 #H_I_up_sort_period.to_csv("H_I_unitprice_by_period.csv")
 
+# Deal with J for indirect competitive
+J_data_extra = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+for f, v1 in sorted(data.items()):
+    J_ori = v1["J"]
+    #print(f, v1["J"].keys())
+    for c_i, value in v1["J"].iteritems():
+        sear = re.search(r"^(MV)_(\d+)$", c_i, re.IGNORECASE)
+        if(sear):
+            sear = sear.groups()
+            MV = sear[0]
+            per = sear[1]
+            for quality in ['A', 'B', 'C', 'D']:                
+                #print(f, quality, MV, per, c_i)
+                if(per == f):
+                    #print("Current", quality)
+                    J_data_extra[f][quality]["current"] = J_ori[ J_ori["Seg"]== quality ][c_i].values[0]
+                else:
+                    #print("Next")
+                    J_data_extra[f][quality]["next"] = J_ori[ J_ori["Seg"]== quality ][c_i].values[0]
+                #print(J_ori[ J_ori["Seg"]== quality ][c_i].values[0])
+
+new_J = pd.DataFrame()
+for per, v1 in sorted(J_data_extra.items()):
+    for quality, v2 in sorted(v1.items()):
+        #print(per, quality, v2["current"], v2["next"])
+        new_J.loc[per+"_"+quality, "MV"] = v2["current"]
+        new_J.loc[per+"_"+quality, "MV_Forecast"] = v2["next"]
+
+        new_J.loc[per+"_"+quality, "MV_Forecast_div_current_per"] = v2["next"]/v2["current"]
+        per_next = str(int(per) + 1)
+        if("current" in J_data_extra[per_next][quality]):
+            new_J.loc[per+"_"+quality, "MV_next_div_current_per"] = J_data_extra[per_next][quality]["current"]/v2["current"]
+new_J.to_excel(writer, "J_MV")
+        
 # Real E_H_I
 def color_larger_1000_red(val):
     color = 'red' if val > 1000 else 'black'
@@ -603,10 +723,12 @@ style.to_excel(writer, "E_F_H_I_market_sort_seg")
 Z_C_data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
 for f, v1 in sorted(data.items()):
     for row in v1["Z"]:
+        # Projection
         for ttype, value in v1["Z"][row].iteritems():
             #print(f, row, ttype, value)
             f_next = str(int(f)+1)
             Z_C_data[f_next][row][ttype]["project"] = value
+        # Real
         for ttype, value in v1["C"][row].iteritems():
             Z_C_data[f][row][ttype]["real"] = value
 
