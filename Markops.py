@@ -225,6 +225,7 @@ fig.savefig(rpt_out+'/E.png')
 
 # Deal with F for competitive
 F_data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+F_data2 = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
 F_data_extra = pd.DataFrame()
 for f, v1 in sorted(data.items()):
     for r_i, row in v1["F"].iterrows():
@@ -278,7 +279,7 @@ for f, v1 in sorted(data.items()):
                 F_data["Total"][row[0]+row[1]]["unitm"] = "MTS_P"
                 F_data["Total"][row[0]+row[1]]["yu"] = [row["UTS_P"]]
                 F_data["Total"][row[0]+row[1]]["unitu"] = "UTS_P"
-            
+
         #For new data
         swot = int(row[1].replace("Z", ""))
         label= iden_label(swot)
@@ -290,12 +291,35 @@ for f, v1 in sorted(data.items()):
         F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "seg"] = label
         F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "product"] = row[1]
 
+        #For new data2
+        if(label in F_data2[f][row[0]]):
+            F_data2[f][row[0]][label] += row["MTS_P"]
+        else:
+            F_data2[f][row[0]][label] = row["MTS_P"]
+
 F_data_extra = F_data_extra.sort_index()
 
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
 ax = fig.add_subplot(111)
 
+# For new data2
+new_F = pd.DataFrame()
+for period, v1 in sorted(F_data2.items()):
+    for company, v2 in sorted(v1.items()):
+        com_sum = 0
+        for label, v3 in sorted(v2.items()):
+            com_sum += v3
+            new_F.loc[period+"_"+company+label, "period"] = period
+            new_F.loc[period+"_"+company+label, "company"] = company
+            new_F.loc[period+"_"+company+label, "label"] = label
+            new_F.loc[period+"_"+company+label, "Total_MS"] = v3
+        new_F.loc[period+"_"+company, "period"] = period
+        new_F.loc[period+"_"+company, "company"] = company
+        new_F.loc[period+"_"+company, "label"] = "ALL"
+        new_F.loc[period+"_"+company, "Total_MS"] = com_sum
+        #print(period, company, label, v3)
+new_F.to_excel(writer, "F_TotalMS")
 
 def autolabel_value(rects):
     for rect in rects:
