@@ -32,6 +32,17 @@ def iden_label (num):
         label = "A"
     return label
 
+def iden_range(label):
+    if(re.search(r"D", label, re.IGNORECASE)):
+        x_min, x_max = 0, 30
+    elif(re.search(r"C", label, re.IGNORECASE)):
+        x_min, x_max = 30, 50
+    elif(re.search(r"B", label, re.IGNORECASE)):
+        x_min, x_max = 50, 70
+    else:
+        x_min, x_max = 70, 100
+    return x_min, x_max
+
 def iden_company(char):
     if(re.search(r"^A$", char, re.IGNORECASE)):
         linestyle = ":"
@@ -669,6 +680,7 @@ period_uniq = H_I_up_sort_period["period"].unique()
 company_uniq = H_I_up_sort_period["company"].unique()
 product_uniq = H_I_up_sort_period["product"].unique()
 sale_method_uniq = H_I_up_sort_period["sale_method"].unique()
+seg_uniq = H_I_up_sort_period["seg"].unique()
 
 E_F_H_I_market_sort_comany =pd.DataFrame()
 od = H_I_up_sort_period
@@ -742,6 +754,79 @@ E_F_H_I_market_sort_seg = E_F_H_I_market_sort_comany.sort_values(['period' , 'se
 style = E_F_H_I_market_sort_seg.style.applymap(color_larger_1000_red, subset = ["SF", "SS", "TS"])
 E_F_H_I_market_sort_seg.to_excel(writer, "E_F_H_I_market_sort_seg")
 style.to_excel(writer, "E_F_H_I_market_sort_seg")
+
+# Draw swot vs. price
+draw_data = collections.defaultdict(lambda: collections.defaultdict(dict))
+draw_w_data = collections.defaultdict(lambda: collections.defaultdict(dict))
+draw = H_I_up_sort_period
+for per in period_uniq:
+    for seg in seg_uniq:
+        for s in sale_method_uniq:
+            #print(per, seg, s)
+            method = re.search(r"^(\w)", s, re.IGNORECASE).groups()[0]
+            others = draw.loc[(draw["period"] == per) & (draw["seg"] == seg) & (draw["company"] != "W") & (draw["sale_method"] == s)]
+            ones = draw.loc[(draw["period"] == per) & (draw["seg"] == seg) & (draw["company"] == "W") & (draw["sale_method"] == s)]
+            
+            # others
+            if(not others.empty):
+                for other, value in others.iterrows():
+                    if("x" in draw_data[per][seg]):
+                        draw_data[per][seg]["x"].append(value["swot"])
+                        draw_data[per][seg]["y"].append(value["UP"])
+                        draw_data[per][seg]["product"].append(value["company"]+str(int(value["swot"]))+method)
+                    else:
+                        #print(value["swot"], value["UP"], value["company"], value["product"], method)
+                        draw_data[per][seg]["x"] = [value["swot"]]
+                        draw_data[per][seg]["y"] = [value["UP"]]
+                        draw_data[per][seg]["product"] = [value["company"]+str(int(value["swot"]))+method]
+            #ones
+            if(not ones.empty):
+                for one, value in ones.iterrows():
+                    if("x" in draw_w_data[per][seg]):
+                        draw_w_data[per][seg]["x"].append(value["swot"])
+                        draw_w_data[per][seg]["y"].append(value["UP"])
+                        draw_w_data[per][seg]["product"].append(value["company"]+str(int(value["swot"]))+method)
+                    else:
+                        #print(value["swot"], value["UP"], value["company"], value["product"], method)
+                        draw_w_data[per][seg]["x"] = [value["swot"]]
+                        draw_w_data[per][seg]["y"] = [value["UP"]]
+                        draw_w_data[per][seg]["product"] = [value["company"]+str(int(value["swot"]))+method]
+        
+fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
+fig.subplots_adjust(hspace=0.3, wspace=0.3)
+for per, v1 in sorted(draw_data.items()):
+    for seg, v2 in sorted(v1.items()):
+        ax = fig.add_subplot(111)
+        # For other companies
+        if(len(v2["x"]) > 1):
+            fit = np.polyfit(v2["x"], v2["y"], 1)
+            fit_fn = np.poly1d(fit)
+            x_min, x_max= iden_range(seg)
+            rrange = [i for i in range(x_min, x_max, 1)]
+            #label = []
+            #for p in v2["product"]:
+                #label.append(TextPath(0,0), str(p))
+            #    print(TextPath(0,0))
+            #print(label)
+            ax.plot(v2["x"], v2["y"], 'ko', rrange, fit_fn(rrange), '-k')
+
+        else:
+            ax.plot(v2["x"], v2["y"], 'ko')
+        for i, label in enumerate(v2["product"]):
+            #print("Others", i, label, v2["x"][i], v2["y"][i])
+            ax.annotate(label, xy=(v2["x"][i], v2["y"][i]), xytext=(v2["x"][i], v2["y"][i]-10), color='black')
+
+        # For W company
+        if("x" in draw_w_data[per][seg]):
+            ax.plot(draw_w_data[per][seg]["x"], draw_w_data[per][seg]["y"], 'go')
+            for i, label in enumerate(draw_w_data[per][seg]["product"]):
+                #print("W", i, label, v2["x"][i], v2["y"][i])
+                ax.annotate(label, xy=(draw_w_data[per][seg]["x"][i], draw_w_data[per][seg]["y"][i]), xytext=(draw_w_data[per][seg]["x"][i], draw_w_data[per][seg]["y"][i]+10), color='green')
+    ax.set_xlabel('Swot')
+    ax.set_ylabel('Price')
+    plt.xlim([0,100])
+    fig.suptitle("Period"+per, fontsize=20)
+    fig.savefig(rpt_out+'/F_price_period'+per+'.png')
 
 
 # Z(Projdction) vs C(real) for product contribution
