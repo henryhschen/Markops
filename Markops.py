@@ -195,6 +195,7 @@ for f, v1 in sorted(data.items()):
         E_data_extra2.loc[f+label+"_"+row[0]+row[1], "company"] = row[0]
         E_data_extra2.loc[f+label+"_"+row[0]+row[1], "product"] = row[1]
 
+
 E_data_extra = E_data_extra.sort_index()
 E_data_extra2 = E_data_extra2.sort_index()
 E_data_extra2.to_excel(writer, "E_PV_PC")
@@ -291,7 +292,7 @@ for f, v1 in sorted(data.items()):
         F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "seg"] = label
         F_data_extra.loc[f+label+"_"+row[0]+row[1]+"_Direct", "product"] = row[1]
 
-        #For new data2
+        #For F new data2
         if(label in F_data2[f][row[0]]):
             F_data2[f][row[0]][label] += row["MTS_P"]
         else:
@@ -310,10 +311,10 @@ for period, v1 in sorted(F_data2.items()):
         com_sum = 0
         for label, v3 in sorted(v2.items()):
             com_sum += v3
-            new_F.loc[period+"_"+company+label, "period"] = period
-            new_F.loc[period+"_"+company+label, "company"] = company
-            new_F.loc[period+"_"+company+label, "label"] = label
-            new_F.loc[period+"_"+company+label, "Total_MS"] = v3
+            new_F.loc[period+label+"_"+company, "period"] = period
+            new_F.loc[period+label+"_"+company, "company"] = company
+            new_F.loc[period+label+"_"+company, "label"] = label
+            new_F.loc[period+label+"_"+company, "Total_MS"] = v3
         new_F.loc[period+"_"+company, "period"] = period
         new_F.loc[period+"_"+company, "company"] = company
         new_F.loc[period+"_"+company, "label"] = "ALL"
