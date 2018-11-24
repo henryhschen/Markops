@@ -792,9 +792,9 @@ for per in period_uniq:
                         draw_w_data[per][seg]["y"] = [value["UP"]]
                         draw_w_data[per][seg]["product"] = [value["company"]+str(int(value["swot"]))+method]
         
-fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
-fig.subplots_adjust(hspace=0.3, wspace=0.3)
 for per, v1 in sorted(draw_data.items()):
+    fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
+    fig.subplots_adjust(hspace=0.3, wspace=0.3)
     for seg, v2 in sorted(v1.items()):
         ax = fig.add_subplot(111)
         # For other companies
