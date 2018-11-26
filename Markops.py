@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.text import TextPath
 
 x_lower = 0
-x_upper = 2
+x_upper = 5
 rpt_out = "output"
 
 parser = argparse.ArgumentParser(description='Process for Markops')
@@ -597,41 +597,41 @@ new_B_I.to_excel(writer, "B_I_indirect")
 # Deal with H and I
 fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
 fig.subplots_adjust(hspace=0.3, wspace=0.3)
-i=0
-for ttype, v1 in I_data.items():
-    i += 1
-    ax = fig.add_subplot(2, math.ceil(len(I_data)/2), i)
-    H_I_data = collections.defaultdict(lambda: collections.defaultdict(dict))
-    for product, v2 in v1.items():
-        if("unit" in H_data[ttype][product]):
-            H_I_data[product]["Direct"]["y"] = H_data[ttype][product]["y"]
-            H_I_data[product]["Direct"]["x"] = H_data[ttype][product]["x"]
-            H_I_data[product]["Direct"]["unit"] = H_data[ttype][product]["unit"]
-            H_I_data[product]["Indirect"]["y"] = I_data[ttype][product]["y"]
-            H_I_data[product]["Indirect"]["x"] = I_data[ttype][product]["x"]
+#i=0
+#for ttype, v1 in I_data.items():
+#    i += 1
+#    ax = fig.add_subplot(2, math.ceil(len(I_data)/2), i)
+#    H_I_data = collections.defaultdict(lambda: collections.defaultdict(dict))
+#    for product, v2 in v1.items():
+#        if("unit" in H_data[ttype][product]):
+#            H_I_data[product]["Direct"]["y"] = H_data[ttype][product]["y"]
+#            H_I_data[product]["Direct"]["x"] = H_data[ttype][product]["x"]
+#            H_I_data[product]["Direct"]["unit"] = H_data[ttype][product]["unit"]
+#            H_I_data[product]["Indirect"]["y"] = I_data[ttype][product]["y"]
+#            H_I_data[product]["Indirect"]["x"] = I_data[ttype][product]["x"]
 
-    fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
-    fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    i=0
-    for product, z1 in sorted(H_I_data.items()):
-        search = re.search(r"^(\w)Z(\d+)$", product, re.IGNORECASE).groups()
-        char = search[0]
-        label= iden_label(int(search[1]))        
-        linestyle = iden_company(char)
-        i += 1
-        ax = fig.add_subplot(2, math.ceil(len(H_I_data)/2), i)
-        for dir_indir, z2 in z1.items():
-            #print(ttype, product, dir_indir, dir_indir[0:1], z2["x"], z2["y"])
-            label = TextPath((0,0), str(dir_indir[0:1]), linewidth=3)
-            ax.plot(z2["x"], z2["y"], label=product+"_"+dir_indir, linestyle=linestyle, marker=label, markersize=20)
-            ax.set_title(product)
-        ax.set_xlabel('Period')
-        ax.set_ylabel(z1["Direct"]["unit"])
+#    fig = plt.figure(num=None, figsize=(8, 6), facecolor='w', edgecolor='k')
+#    fig.subplots_adjust(hspace=0.3, wspace=0.3)
+#    i=0
+#    for product, z1 in sorted(H_I_data.items()):
+#        search = re.search(r"^(\w)Z(\d+)$", product, re.IGNORECASE).groups()
+#        char = search[0]
+#        label= iden_label(int(search[1]))        
+#        linestyle = iden_company(char)
+#        i += 1
+#        ax = fig.add_subplot(2, math.ceil(len(H_I_data)/2), i)
+#        for dir_indir, z2 in z1.items():
+#            #print(ttype, product, dir_indir, dir_indir[0:1], z2["x"], z2["y"])
+#            label = TextPath((0,0), str(dir_indir[0:1]), linewidth=3)
+#            ax.plot(z2["x"], z2["y"], label=product+"_"+dir_indir, linestyle=linestyle, marker=label, markersize=20)
+#            ax.set_title(product)
+#        ax.set_xlabel('Period')
+#        ax.set_ylabel(z1["Direct"]["unit"])
 
-    labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-    fig.legend(handles, labels, loc='lower right')
-    fig.suptitle(ttype, fontsize=20)
-    fig.savefig(rpt_out+'/H_I_'+ttype+'.png')
+#    labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+#    fig.legend(handles, labels, loc='lower right')
+#    fig.suptitle(ttype, fontsize=20)
+#    fig.savefig(rpt_out+'/H_I_'+ttype+'.png')
 
 # Draw H and I unit price vs. swot
 H_I_up_sort_period = H_I_up_sort_period.sort_index()
